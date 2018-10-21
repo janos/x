@@ -124,14 +124,14 @@ func (a App) Start(logger *logging.Logger) error {
 				if dir != "" {
 					f, err := os.OpenFile(filepath.Join(dir, "vars"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, DefaultFileMode)
 					if err != nil {
-						logging.Errorf("debug dump: create vars file: %s", err)
+						logger.Errorf("debug dump: create vars file: %s", err)
 						continue
 					}
 					if err := expvarExport(f); err != nil {
-						logging.Errorf("debug dump: write vars file: %s", err)
+						logger.Errorf("debug dump: write vars file: %s", err)
 					}
 					if err := f.Close(); err != nil {
-						logging.Errorf("debug dump: close vars file: %s", err)
+						logger.Errorf("debug dump: close vars file: %s", err)
 					}
 				} else {
 					expvarExport(os.Stderr)
