@@ -1,0 +1,11 @@
+github.com/kelseyhightower/envconfig v1.3.0 h1:IvRS4f2VcIQy6j4ORGIf9145T/AsUB+oY8LyvN8BXNM=
+github.com/kelseyhightower/envconfig v1.3.0/go.mod h1:cccZRl6mQpaq41TPp5QxidR+Sa3axMbJDNb//FQX6Gg=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/yaml.v2 v2.2.1 h1:mUhvW9EsL+naU5Q3cakzfE91YhliOondGd6ZrsDBHQE=
+gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
+resenje.org/daemon v0.1.1/go.mod h1:1i53WW4IaMYGssHGtSR2zbZWKVYHTbenqFYZjFuy+ZU=
+resenje.org/logging v0.1.3 h1:xTNpuKzkvmWfBW5yFYhqd6CO/bi6ecoUqwPhoWPV24s=
+resenje.org/logging v0.1.3/go.mod h1:62mkDabZpo77D9rH/Z0x33GlBpGtB9ZtdURtnRB2pb0=
+resenje.org/marshal v0.1.1 h1:ok/SWjtD10u0juBj9FRzPq93KtVjNAwEp9wZc6ZGwE4=
+resenje.org/marshal v0.1.1/go.mod h1:P7Cla6Ju5CFvW4Y8JbRgWX1Hcy4L1w4qcCsyadO7G94=
