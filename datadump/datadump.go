@@ -3,10 +3,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package dataDump
+package datadump
 
 import (
 	"archive/tar"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -20,12 +21,21 @@ import (
 // is not nil and data is not changed since provided time,
 // both return values, Dump and error, will be nil.
 type Interface interface {
-	DataDump(ifModifiedSince *time.Time) (dump *Dump, err error)
+	DataDump(fn func(f File) (err error)) (err error)
 }
 
-// Dump defines a structure that holds dump metadata and body as reader interface.
+// InterfaceFunc implements Interface as a single function that can
+// be assigned.
+type InterfaceFunc func(fn func(f File) (err error)) (err error)
+
+// DataDump calls the type function.
+func (f InterfaceFunc) DataDump(fn func(f File) (err error)) (err error) {
+	return f(fn)
+}
+
+// File defines a structure that holds dump metadata and body as reader interface.
 // Body must be closed after the read is done.
-type Dump struct {
+type File struct {
 	Name        string
 	ContentType string
 	Length      int64
@@ -79,35 +89,36 @@ func Handler(o interface{}, filePrefix string, logger Logger) http.Handler {
 		tw := tar.NewWriter(w)
 		var length int64
 
-		dump := func(name string, i Interface) (err error) {
-			logger.Infof("data dump: dumping %s data", name)
-			dump, err := i.DataDump(nil)
-			if err != nil {
-				return fmt.Errorf("read dump file %s: %v", dump.Name, err)
-			}
-			if dump == nil {
+		newDumpFn := func(name string) func(f File) (err error) {
+			return func(f File) (err error) {
+				if f.Name == "" {
+					return errors.New("file name can not be blank")
+				}
+				if f.Body == nil {
+					return errors.New("file body can not be nil")
+				}
+				logger.Infof("data dump: dumping %s file %s", name, f.Name)
+				header := &tar.Header{
+					Name: f.Name,
+					Mode: 0666,
+					Size: f.Length,
+				}
+				if f.ModTime != nil {
+					header.ModTime = *f.ModTime
+				}
+				if err := tw.WriteHeader(header); err != nil {
+					return fmt.Errorf("write file header %s in tar: %v", f.Name, err)
+				}
+
+				n, err := io.Copy(tw, f.Body)
+				defer f.Body.Close()
+				if err != nil {
+					return fmt.Errorf("write file data %s in tar: %v", f.Name, err)
+				}
+				length += n
+				logger.Infof("data dump: read %d bytes of %s file %s", n, name, f.Name)
 				return nil
 			}
-			header := &tar.Header{
-				Name: dump.Name,
-				Mode: 0666,
-				Size: dump.Length,
-			}
-			if dump.ModTime != nil {
-				header.ModTime = *dump.ModTime
-			}
-			if err := tw.WriteHeader(header); err != nil {
-				return fmt.Errorf("write file header %s in tar: %v", dump.Name, err)
-			}
-
-			n, err := io.Copy(tw, dump.Body)
-			defer dump.Body.Close()
-			if err != nil {
-				return fmt.Errorf("data dump: write file data %s in tar: %v", dump.Name, err)
-			}
-			length += n
-			logger.Infof("data dump: read %d bytes of %s  data", n, name)
-			return nil
 		}
 
 		v := reflect.Indirect(reflect.ValueOf(o))
@@ -120,8 +131,8 @@ func Handler(o interface{}, filePrefix string, logger Logger) http.Handler {
 				}
 				if u, ok := v.Field(i).Interface().(Interface); ok {
 					name := v.Type().Field(i).Name
-					if err := dump(name, u); err != nil {
-						logger.Errorf("data dump: %v", err)
+					if err := u.DataDump(newDumpFn(name)); err != nil {
+						logger.Errorf("data dump: %s: %v", name, err)
 					}
 				}
 			}
@@ -135,8 +146,8 @@ func Handler(o interface{}, filePrefix string, logger Logger) http.Handler {
 				if !ok {
 					continue
 				}
-				if err := dump(name, u); err != nil {
-					logger.Errorf("data dump: %v", err)
+				if err := u.DataDump(newDumpFn(name)); err != nil {
+					logger.Errorf("data dump: %s: %v", name, err)
 				}
 			}
 		}
