@@ -7,7 +7,6 @@ package application
 
 import (
 	"os"
-	"path/filepath"
 
 	"resenje.org/logging"
 	"resenje.org/marshal"
@@ -33,11 +32,7 @@ type LoggingOptions struct {
 }
 
 // NewLoggingOptions initializes LoggingOptions with default values.
-func NewLoggingOptions(name, baseDir string) *LoggingOptions {
-	logDir := ""
-	if baseDir != "" {
-		logDir = filepath.Join(baseDir, "log")
-	}
+func NewLoggingOptions(name, logDir string) *LoggingOptions {
 	return &LoggingOptions{
 		name:                 name,
 		LogDir:               logDir,
