@@ -8,7 +8,6 @@ package application
 import (
 	"io"
 	"log"
-	"log/syslog"
 
 	"resenje.org/logging"
 )
@@ -56,22 +55,6 @@ func (l Loggers) NewLogger(name string, level logging.Level, handlers ...logging
 		}
 	}
 	return logging.NewLogger(name, level, hs, 0)
-}
-
-// NewSyslogHandler is a helper to easily create
-// logging.SyslogHandler.
-func NewSyslogHandler(facility logging.SyslogFacility, tag, network, address string) logging.Handler {
-	if facility != "" {
-		return &logging.SyslogHandler{
-			Formatter: &logging.MessageFormatter{},
-			Tag:       tag,
-			Facility:  facility.Priority(),
-			Severity:  syslog.Priority(logging.DEBUG),
-			Network:   network,
-			Address:   address,
-		}
-	}
-	return nil
 }
 
 // NewTimedFileHandler is a helper to easily create
