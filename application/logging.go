@@ -34,9 +34,13 @@ type LoggingOptions struct {
 
 // NewLoggingOptions initializes LoggingOptions with default values.
 func NewLoggingOptions(name, baseDir string) *LoggingOptions {
+	logDir := ""
+	if baseDir != "" {
+		logDir = filepath.Join(baseDir, "log")
+	}
 	return &LoggingOptions{
 		name:                 name,
-		LogDir:               filepath.Join(baseDir, "log"),
+		LogDir:               logDir,
 		LogLevel:             logging.DEBUG,
 		SyslogFacility:       "",
 		SyslogTag:            name,
