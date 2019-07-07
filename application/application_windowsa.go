@@ -7,4 +7,6 @@
 
 package application
 
-func (a App) handleSignals() {}
+import "resenje.org/logging"
+
+func (a App) handleSignals(logger *logging.Logger) {}

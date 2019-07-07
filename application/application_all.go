@@ -15,9 +15,11 @@ import (
 	"runtime/pprof"
 	"syscall"
 	"time"
+
+	"resenje.org/logging"
 )
 
-func (a App) handleSignals() {
+func (a App) handleSignals(logger *logging.Logger) {
 	signalChannel := make(chan os.Signal)
 	signal.Notify(signalChannel, syscall.SIGUSR1)
 	go func() {

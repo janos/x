@@ -102,7 +102,7 @@ func NewApp(name string, o AppOptions) (a *App, err error) {
 // signals are received.
 func (a App) Start(logger *logging.Logger) error {
 	// We want some fancy signal features
-	a.handleSignals()
+	a.handleSignals(logger)
 
 	defer func() {
 		// Handle panic in this goroutine
