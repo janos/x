@@ -127,7 +127,7 @@ func (a App) Start(logger *logging.Logger) error {
 
 	// Wait fog termination or interrupt signals
 	// We want to clean up thing at the end
-	interruptChannel := make(chan os.Signal)
+	interruptChannel := make(chan os.Signal, 1)
 	signal.Notify(interruptChannel, syscall.SIGINT, syscall.SIGTERM)
 	// Blocking part
 	logger.Noticef("received signal: %v", <-interruptChannel)
@@ -153,7 +153,7 @@ func (a App) Start(logger *logging.Logger) error {
 
 		// If shutdown function is blocking too long,
 		// allow process termination by receiving another signal.
-		interruptChannel := make(chan os.Signal)
+		interruptChannel := make(chan os.Signal, 1)
 		signal.Notify(interruptChannel, syscall.SIGINT, syscall.SIGTERM)
 		// Blocking part
 		select {
