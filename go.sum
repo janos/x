@@ -59,11 +59,17 @@ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 h1:qIbj1fsPNlZgppZ+VLlY7N33q108Sa+fhmuc+sWQYwY=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 h1:YR8cESwS4TdDjEe65xsg0ogRM/Nc3DYOhEAlW+xobZo=
+gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.2 h1:ZCJp+EgiOT7lHqUV2J862kp8Qj64Jo6az82+3Td9dZw=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
+gopkg.in/yaml.v2 v2.2.4 h1:/eiJrUcujPVeJ3xlSWaiNi3uSVmDGBK1pDHUHAnao1I=
+gopkg.in/yaml.v2 v2.2.4/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 resenje.org/daemon v0.1.1 h1:NFxCkDOzbZ5QKn7x4Y0TpkCTYnC/D1fMLqw3E7A9KoU=
 resenje.org/daemon v0.1.1/go.mod h1:1i53WW4IaMYGssHGtSR2zbZWKVYHTbenqFYZjFuy+ZU=
+resenje.org/daemon v0.1.2 h1:aalIaDzo8YRMm9wiYb/fc8CPAsZc/rerc6mmzshABLg=
+resenje.org/daemon v0.1.2/go.mod h1:mF5JRpH3EbrxI9WoeKY78e6PqSsbBtX9jAQL5vj/GBA=
 resenje.org/logging v0.1.5 h1:dw2TEg2kw7lhDqCCH5SqC1pFVuIFcqnTkI5PzgOhopM=
 resenje.org/logging v0.1.5/go.mod h1:1IdoCm3+UwYfsplxDGV2pHCkUrLlQzlWwp4r28XfPx4=
 resenje.org/marshal v0.1.1 h1:ok/SWjtD10u0juBj9FRzPq93KtVjNAwEp9wZc6ZGwE4=
