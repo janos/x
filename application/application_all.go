@@ -20,7 +20,7 @@ import (
 )
 
 func (a App) handleSignals(logger *logging.Logger) {
-	signalChannel := make(chan os.Signal)
+	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, syscall.SIGUSR1)
 	go func() {
 	Loop:
@@ -51,7 +51,9 @@ func (a App) handleSignals(logger *logging.Logger) {
 						logger.Errorf("debug dump: close vars file: %s", err)
 					}
 				} else {
-					expvarExport(os.Stderr)
+					if err := expvarExport(os.Stderr); err != nil {
+						logger.Errorf("debug dump: expvar export: %s", err)
+					}
 				}
 
 				for _, d := range []struct {
@@ -91,13 +93,17 @@ func (a App) handleSignals(logger *logging.Logger) {
 							logger.Errorf("debug dump: create %s dump file: %s", d.filename, err)
 							continue
 						}
-						pprof.Lookup(d.profile).WriteTo(f, d.debugLevel)
+						if err := pprof.Lookup(d.profile).WriteTo(f, d.debugLevel); err != nil {
+							logger.Errorf("debug dump: write to %s file: %s", d.filename, err)
+						}
 						if err := f.Close(); err != nil {
 							logger.Errorf("debug dump: close %s file: %s", d.filename, err)
 						}
 					} else {
 						fmt.Fprintln(os.Stderr, "debug dump:", d.filename)
-						pprof.Lookup(d.profile).WriteTo(os.Stderr, d.debugLevel)
+						if err := pprof.Lookup(d.profile).WriteTo(os.Stderr, d.debugLevel); err != nil {
+							logger.Errorf("debug dump: write to %s file: %s", d.filename, err)
+						}
 					}
 				}
 				if dir != "" {

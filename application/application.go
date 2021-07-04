@@ -133,7 +133,7 @@ func (a App) Start(logger *logging.Logger) error {
 	logger.Noticef("received signal: %v", <-interruptChannel)
 	if a.Daemon != nil && a.Daemon.PidFileName != "" {
 		// Remove Pid file only if there is a daemon
-		a.Daemon.Cleanup()
+		_ = a.Daemon.Cleanup()
 	}
 
 	if a.ShutdownFunc != nil {
