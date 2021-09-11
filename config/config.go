@@ -63,7 +63,7 @@ func (c *Config) Load() (err error) {
 			}
 		}
 		prefix := strings.Replace(c.Name, "-", "_", -1)
-		if strings.EqualFold(c.Name, o.name) {
+		if !strings.EqualFold(c.Name, o.name) {
 			prefix += "_" + o.name
 		}
 		if err := envconfig.Process(prefix, o.o); err != nil {
