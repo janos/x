@@ -97,10 +97,17 @@ func NewApp(name string, o AppOptions) (a *App, err error) {
 	return
 }
 
+// Logger processes messages with different severity levels.
+type Logger interface {
+	Tracef(format string, args ...interface{})
+	Infof(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+}
+
 // Start executes all function in App.Functions, starts a goroutine
 // that receives USR1 signal to dump debug data and blocks until INT or TERM
 // signals are received.
-func (a App) Start(logger *logging.Logger) error {
+func (a App) Start(logger Logger) error {
 	// We want some fancy signal features
 	a.handleSignals(logger)
 
@@ -115,7 +122,7 @@ func (a App) Start(logger *logging.Logger) error {
 		}
 	}()
 
-	logger.Info("application start")
+	logger.Infof("application start")
 	logger.Infof("pid %d", os.Getpid())
 
 	// Start all async functions
@@ -130,7 +137,7 @@ func (a App) Start(logger *logging.Logger) error {
 	interruptChannel := make(chan os.Signal, 1)
 	signal.Notify(interruptChannel, syscall.SIGINT, syscall.SIGTERM)
 	// Blocking part
-	logger.Noticef("received signal: %v", <-interruptChannel)
+	logger.Tracef("received signal: %v", <-interruptChannel)
 	if a.Daemon != nil && a.Daemon.PidFileName != "" {
 		// Remove Pid file only if there is a daemon
 		_ = a.Daemon.Cleanup()
@@ -158,12 +165,12 @@ func (a App) Start(logger *logging.Logger) error {
 		// Blocking part
 		select {
 		case sig := <-interruptChannel:
-			logger.Noticef("received signal: %v", sig)
+			logger.Tracef("received signal: %v", sig)
 		case <-done:
 		}
 	}
 
-	logger.Info("application stop")
+	logger.Infof("application stop")
 	// Process remaining log messages
 	logging.WaitForAllUnprocessedRecords()
 	return nil

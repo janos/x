@@ -3,7 +3,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//+build !windows
+//go:build !windows
+// +build !windows
 
 package application
 
@@ -15,18 +16,16 @@ import (
 	"runtime/pprof"
 	"syscall"
 	"time"
-
-	"resenje.org/logging"
 )
 
-func (a App) handleSignals(logger *logging.Logger) {
+func (a App) handleSignals(logger Logger) {
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, syscall.SIGUSR1)
 	go func() {
 	Loop:
 		for {
 			sig := <-signalChannel
-			logger.Noticef("received signal: %v", sig)
+			logger.Tracef("received signal: %v", sig)
 			switch sig {
 			case syscall.SIGUSR1:
 				var dir string
@@ -109,7 +108,7 @@ func (a App) handleSignals(logger *logging.Logger) {
 				if dir != "" {
 					logger.Infof("debug dump: %s", dir)
 				} else {
-					logger.Info("debug dump: done")
+					logger.Infof("debug dump: done")
 				}
 			}
 		}

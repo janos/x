@@ -3,10 +3,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//+build windows
+//go:build windows
+// +build windows
 
 package application
 
-import "resenje.org/logging"
-
-func (a App) handleSignals(logger *logging.Logger) {}
+func (a App) handleSignals(_ Logger) {}
