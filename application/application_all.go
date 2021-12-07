@@ -25,7 +25,7 @@ func (a App) handleSignals(logger Logger) {
 	Loop:
 		for {
 			sig := <-signalChannel
-			logger.Tracef("received signal: %v", sig)
+			logger.Infof("received signal: %v", sig)
 			switch sig {
 			case syscall.SIGUSR1:
 				var dir string

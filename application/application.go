@@ -99,7 +99,6 @@ func NewApp(name string, o AppOptions) (a *App, err error) {
 
 // Logger processes messages with different severity levels.
 type Logger interface {
-	Tracef(format string, args ...interface{})
 	Infof(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 }
@@ -137,7 +136,7 @@ func (a App) Start(logger Logger) error {
 	interruptChannel := make(chan os.Signal, 1)
 	signal.Notify(interruptChannel, syscall.SIGINT, syscall.SIGTERM)
 	// Blocking part
-	logger.Tracef("received signal: %v", <-interruptChannel)
+	logger.Infof("received signal: %v", <-interruptChannel)
 	if a.Daemon != nil && a.Daemon.PidFileName != "" {
 		// Remove Pid file only if there is a daemon
 		_ = a.Daemon.Cleanup()
@@ -165,7 +164,7 @@ func (a App) Start(logger Logger) error {
 		// Blocking part
 		select {
 		case sig := <-interruptChannel:
-			logger.Tracef("received signal: %v", sig)
+			logger.Infof("received signal: %v", sig)
 		case <-done:
 		}
 	}
