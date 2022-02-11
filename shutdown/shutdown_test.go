@@ -128,3 +128,32 @@ func TestGraceful_quit(t *testing.T) {
 		t.Error("goroutine was not done")
 	}
 }
+
+func TestGraceful_Context(t *testing.T) {
+	g := shutdown.NewGraceful()
+
+	duration := 200 * time.Millisecond
+
+	g.Add(1)
+	go func() {
+		defer g.Done()
+		time.Sleep(duration)
+	}()
+
+	ctx := g.Context(context.Background())
+
+	start := time.Now()
+	if err := g.Shutdown(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case <-ctx.Done():
+	case <-time.After(100 * time.Millisecond):
+		t.Error("context was not done")
+	}
+
+	if time.Since(start) < duration {
+		t.Error("shutdown finished before the context is done")
+	}
+}

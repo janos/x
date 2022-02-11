@@ -60,3 +60,19 @@ func (g *Graceful) Shutdown(ctx context.Context) error {
 	}
 	return nil
 }
+
+// Context creates a new context that will be canceled when Graceful is shut
+// down.
+func (g *Graceful) Context(ctx context.Context) context.Context {
+	ctx, cancel := context.WithCancel(ctx)
+
+	go func() {
+		select {
+		case <-g.Quit():
+		case <-ctx.Done():
+		}
+		cancel()
+	}()
+
+	return ctx
+}
