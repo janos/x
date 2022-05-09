@@ -102,7 +102,7 @@ func Handler(o interface{}, filePrefix string, logger Logger, compress bool) htt
 			w.Header().Set("Content-Type", "application/octet-stream")
 		}
 		if filePrefix != "" {
-			w.Header().Set("Content-Disposition", `attachment; filename="`+strings.Join([]string{start.UTC().Format("2006-01-02T15-04-05Z0700"), filePrefix}, "_")+`.`+extension)
+			w.Header().Set("Content-Disposition", `attachment; filename="`+strings.Join([]string{start.UTC().Format("2006-01-02T15-04-05Z0700"), filePrefix}, "_")+`.`+extension+`"`)
 		}
 		w.Header().Set("Date", start.UTC().Format(http.TimeFormat))
 
