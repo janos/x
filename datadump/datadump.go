@@ -7,6 +7,7 @@ package datadump
 
 import (
 	"archive/tar"
+	"compress/gzip"
 	"errors"
 	"fmt"
 	"io"
@@ -61,14 +62,15 @@ func (l stdLogger) Errorf(format string, a ...interface{}) {
 	log.Printf("ERROR "+format, a...)
 }
 
-// Handler returns http.Handler that will call DataDump on
-// every o field that implements Interface. If filePrefix is not blank
-// Content-Disposition HTTP header will be added to the response.
-// The response body will be the tar archive containing binary files
-// named by the o fields that implement Interface. The provided
-// interface can be a struct or a map with string keys and interface{}
-// values that will be checked if they implement the Interface.
-func Handler(o interface{}, filePrefix string, logger Logger) http.Handler {
+// Handler returns http.Handler that will call DataDump on every o field that
+// implements Interface. If filePrefix is not blank Content-Disposition HTTP
+// header will be added to the response. The response body will be the tar
+// archive containing binary files named by the o fields that implement
+// Interface. The provided interface can be a struct or a map with string keys
+// and interface{} values that will be checked if they implement the Interface.
+// If compression argument is set to true, the response will be compressed with
+// gzip default options.
+func Handler(o interface{}, filePrefix string, logger Logger, compress bool) http.Handler {
 	if logger == nil {
 		logger = stdLogger{}
 	}
@@ -80,14 +82,29 @@ func Handler(o interface{}, filePrefix string, logger Logger) http.Handler {
 		start := time.Now()
 		logger.Infof("data dump: started")
 
-		w.Header().Set("Content-Type", "application/octet-stream")
+		extension := "tar"
+		var rw io.Writer = w
+		if compress {
+			gzw := gzip.NewWriter(rw)
+			defer gzw.Close()
+
+			extension = "tar.gz"
+			rw = gzw
+		}
+		tw := tar.NewWriter(rw)
+		defer tw.Close()
+
+		var length int64
+
+		if compress {
+			w.Header().Set("Content-Type", "application/gzip")
+		} else {
+			w.Header().Set("Content-Type", "application/octet-stream")
+		}
 		if filePrefix != "" {
-			w.Header().Set("Content-Disposition", `attachment; filename="`+strings.Join([]string{start.UTC().Format("2006-01-02T15-04-05Z0700"), filePrefix}, "_")+`.tar"`)
+			w.Header().Set("Content-Disposition", `attachment; filename="`+strings.Join([]string{start.UTC().Format("2006-01-02T15-04-05Z0700"), filePrefix}, "_")+`.`+extension)
 		}
 		w.Header().Set("Date", start.UTC().Format(http.TimeFormat))
-
-		tw := tar.NewWriter(w)
-		var length int64
 
 		newDumpFn := func(name string) func(f File) (err error) {
 			return func(f File) (err error) {
@@ -150,10 +167,6 @@ func Handler(o interface{}, filePrefix string, logger Logger) http.Handler {
 					logger.Errorf("data dump: %s: %v", name, err)
 				}
 			}
-		}
-
-		if err := tw.Close(); err != nil {
-			logger.Errorf("data dump: closing tar: %s", err)
 		}
 
 		logger.Infof("data dump: wrote %d bytes in %s", length, time.Since(start))
