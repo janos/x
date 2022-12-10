@@ -11,11 +11,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"reflect"
 	"strings"
 	"time"
+
+	"golang.org/x/exp/slog"
 )
 
 // Interface defines method to retrieve data Dump. If ifModifiedSince
@@ -37,29 +38,10 @@ func (f InterfaceFunc) DataDump(fn func(f File) (err error)) (err error) {
 // File defines a structure that holds dump metadata and body as reader interface.
 // Body must be closed after the read is done.
 type File struct {
-	Name        string
-	ContentType string
-	Length      int64
-	ModTime     *time.Time
-	Body        io.ReadCloser
-}
-
-// Logger defines methods required for logging.
-type Logger interface {
-	Infof(format string, a ...interface{})
-	Errorf(format string, a ...interface{})
-}
-
-// stdLogger is a simple implementation of Logger interface
-// that uses log package for logging messages.
-type stdLogger struct{}
-
-func (l stdLogger) Infof(format string, a ...interface{}) {
-	log.Printf("INFO "+format, a...)
-}
-
-func (l stdLogger) Errorf(format string, a ...interface{}) {
-	log.Printf("ERROR "+format, a...)
+	Name    string
+	Length  int64
+	ModTime *time.Time
+	Body    io.ReadCloser
 }
 
 // Handler returns http.Handler that will call DataDump on every o field that
@@ -70,9 +52,9 @@ func (l stdLogger) Errorf(format string, a ...interface{}) {
 // and interface{} values that will be checked if they implement the Interface.
 // If compression argument is set to true, the response will be compressed with
 // gzip default options.
-func Handler(o interface{}, filePrefix string, logger Logger, compress bool) http.Handler {
+func Handler(o interface{}, filePrefix string, logger *slog.Logger, compress bool) http.Handler {
 	if logger == nil {
-		logger = stdLogger{}
+		logger = slog.Default()
 	}
 	kind := reflect.Indirect(reflect.ValueOf(o)).Kind()
 	if kind != reflect.Struct && kind != reflect.Map {
@@ -80,7 +62,7 @@ func Handler(o interface{}, filePrefix string, logger Logger, compress bool) htt
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		logger.Infof("data dump: started")
+		logger.Info("data dump: start")
 
 		extension := "tar"
 		var rw io.Writer = w
@@ -99,7 +81,7 @@ func Handler(o interface{}, filePrefix string, logger Logger, compress bool) htt
 		if compress {
 			w.Header().Set("Content-Type", "application/gzip")
 		} else {
-			w.Header().Set("Content-Type", "application/octet-stream")
+			w.Header().Set("Content-Type", "application/x-tar")
 		}
 		if filePrefix != "" {
 			w.Header().Set("Content-Disposition", `attachment; filename="`+strings.Join([]string{start.UTC().Format("2006-01-02T15-04-05Z0700"), filePrefix}, "_")+`.`+extension+`"`)
@@ -114,7 +96,7 @@ func Handler(o interface{}, filePrefix string, logger Logger, compress bool) htt
 				if f.Body == nil {
 					return errors.New("file body can not be nil")
 				}
-				logger.Infof("data dump: dumping %s file %s", name, f.Name)
+				logger.Info("data dump: dumping", "name", name, "file", f.Name)
 				header := &tar.Header{
 					Name: f.Name,
 					Mode: 0666,
@@ -133,7 +115,7 @@ func Handler(o interface{}, filePrefix string, logger Logger, compress bool) htt
 					return fmt.Errorf("write file data %s in tar: %v", f.Name, err)
 				}
 				length += n
-				logger.Infof("data dump: read %d bytes of %s file %s", n, name, f.Name)
+				logger.Info("data dump: read", "size", n, "name", name, "file", f.Name)
 				return nil
 			}
 		}
@@ -149,7 +131,7 @@ func Handler(o interface{}, filePrefix string, logger Logger, compress bool) htt
 				if u, ok := v.Field(i).Interface().(Interface); ok {
 					name := v.Type().Field(i).Name
 					if err := u.DataDump(newDumpFn(name)); err != nil {
-						logger.Errorf("data dump: %s: %v", name, err)
+						logger.Error("data dump", err, "name", name)
 					}
 				}
 			}
@@ -164,11 +146,11 @@ func Handler(o interface{}, filePrefix string, logger Logger, compress bool) htt
 					continue
 				}
 				if err := u.DataDump(newDumpFn(name)); err != nil {
-					logger.Errorf("data dump: %s: %v", name, err)
+					logger.Error("data dump", err, "name", name)
 				}
 			}
 		}
 
-		logger.Infof("data dump: wrote %d bytes in %s", length, time.Since(start))
+		logger.Info("data dump: done", "size", length, "duration", time.Since(start))
 	})
 }

@@ -16,23 +16,25 @@ import (
 	"runtime/pprof"
 	"syscall"
 	"time"
+
+	"golang.org/x/exp/slog"
 )
 
-func (a App) handleSignals(logger Logger) {
+func (a App) handleSignals(logger *slog.Logger) {
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, syscall.SIGUSR1)
 	go func() {
 	Loop:
 		for {
 			sig := <-signalChannel
-			logger.Infof("received signal: %v", sig)
+			logger.Info("received signal", "signal", sig)
 			switch sig {
 			case syscall.SIGUSR1:
 				var dir string
 				if a.homeDir != "" {
 					dir = filepath.Join(a.homeDir, "debug", time.Now().UTC().Format("2006-01-02_15.04.05.000000"))
 					if err := os.MkdirAll(dir, DefaultDirectoryMode); err != nil {
-						logger.Errorf("debug dump: create debug log dir: %s", err)
+						logger.Error("debug dump: create debug log dir", err)
 						continue Loop
 					}
 				}
@@ -40,18 +42,18 @@ func (a App) handleSignals(logger Logger) {
 				if dir != "" {
 					f, err := os.OpenFile(filepath.Join(dir, "vars"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, DefaultFileMode)
 					if err != nil {
-						logger.Errorf("debug dump: create vars file: %s", err)
+						logger.Error("debug dump: create vars file", err)
 						continue
 					}
 					if err := expvarExport(f); err != nil {
-						logger.Errorf("debug dump: write vars file: %s", err)
+						logger.Error("debug dump: write vars file", err)
 					}
 					if err := f.Close(); err != nil {
-						logger.Errorf("debug dump: close vars file: %s", err)
+						logger.Error("debug dump: close vars file", err)
 					}
 				} else {
 					if err := expvarExport(os.Stderr); err != nil {
-						logger.Errorf("debug dump: expvar export: %s", err)
+						logger.Error("debug dump: expvar export", err)
 					}
 				}
 
@@ -89,26 +91,26 @@ func (a App) handleSignals(logger Logger) {
 					if dir != "" {
 						f, err := os.OpenFile(filepath.Join(dir, d.filename), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, DefaultFileMode)
 						if err != nil {
-							logger.Errorf("debug dump: create %s dump file: %s", d.filename, err)
+							logger.Error("debug dump: create dump file", err, "filename", d.filename)
 							continue
 						}
 						if err := pprof.Lookup(d.profile).WriteTo(f, d.debugLevel); err != nil {
-							logger.Errorf("debug dump: write to %s file: %s", d.filename, err)
+							logger.Error("debug dump: write to file", err, "filename", d.filename)
 						}
 						if err := f.Close(); err != nil {
-							logger.Errorf("debug dump: close %s file: %s", d.filename, err)
+							logger.Error("debug dump: close file", err, "filename", d.filename)
 						}
 					} else {
 						fmt.Fprintln(os.Stderr, "debug dump:", d.filename)
 						if err := pprof.Lookup(d.profile).WriteTo(os.Stderr, d.debugLevel); err != nil {
-							logger.Errorf("debug dump: write to %s file: %s", d.filename, err)
+							logger.Error("debug dump: write to file", err, "filename", d.filename)
 						}
 					}
 				}
 				if dir != "" {
-					logger.Infof("debug dump: %s", dir)
+					logger.Info("debug dump: done", "dir", dir)
 				} else {
-					logger.Infof("debug dump: done")
+					logger.Info("debug dump: done")
 				}
 			}
 		}

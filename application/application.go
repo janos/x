@@ -17,8 +17,8 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/exp/slog"
 	"resenje.org/daemon"
-	"resenje.org/logging"
 )
 
 // Package default variables.
@@ -97,16 +97,10 @@ func NewApp(name string, o AppOptions) (a *App, err error) {
 	return
 }
 
-// Logger processes messages with different severity levels.
-type Logger interface {
-	Infof(format string, args ...interface{})
-	Errorf(format string, args ...interface{})
-}
-
 // Start executes all function in App.Functions, starts a goroutine
 // that receives USR1 signal to dump debug data and blocks until INT or TERM
 // signals are received.
-func (a App) Start(logger Logger) error {
+func (a App) Start(logger *slog.Logger) error {
 	// We want some fancy signal features
 	a.handleSignals(logger)
 
@@ -114,15 +108,13 @@ func (a App) Start(logger Logger) error {
 		// Handle panic in this goroutine
 		if err := recover(); err != nil {
 			// Just log the panic error and crash
-			logger.Errorf("panic: %s", err)
-			logger.Errorf("stack: %s", debug.Stack())
-			logging.WaitForAllUnprocessedRecords()
+			logger.Log(slog.ErrorLevel, "panic", slog.ErrorKey, err)
+			logger.Info("stack", debug.Stack())
 			os.Exit(1)
 		}
 	}()
 
-	logger.Infof("application start")
-	logger.Infof("pid %d", os.Getpid())
+	logger.Info("application start", "pid", os.Getpid())
 
 	// Start all async functions
 	for _, function := range a.Functions {
@@ -136,7 +128,7 @@ func (a App) Start(logger Logger) error {
 	interruptChannel := make(chan os.Signal, 1)
 	signal.Notify(interruptChannel, syscall.SIGINT, syscall.SIGTERM)
 	// Blocking part
-	logger.Infof("received signal: %v", <-interruptChannel)
+	logger.Info("received signal", "signal", <-interruptChannel)
 	if a.Daemon != nil && a.Daemon.PidFileName != "" {
 		// Remove Pid file only if there is a daemon
 		_ = a.Daemon.Cleanup()
@@ -147,12 +139,12 @@ func (a App) Start(logger Logger) error {
 		go func() {
 			defer func() {
 				if err := recover(); err != nil {
-					logger.Errorf("shutdown panic: %s", err)
+					logger.Log(slog.ErrorLevel, "shutdown panic", slog.ErrorKey, err)
 				}
 			}()
 
 			if err := a.ShutdownFunc(); err != nil {
-				logger.Errorf("shutdown: %s", err)
+				logger.Error("shutdown", err)
 			}
 			close(done)
 		}()
@@ -164,14 +156,12 @@ func (a App) Start(logger Logger) error {
 		// Blocking part
 		select {
 		case sig := <-interruptChannel:
-			logger.Infof("received signal: %v", sig)
+			logger.Info("received signal", "signal", sig)
 		case <-done:
 		}
 	}
 
-	logger.Infof("application stop")
-	// Process remaining log messages
-	logging.WaitForAllUnprocessedRecords()
+	logger.Info("application stop")
 	return nil
 }
 
