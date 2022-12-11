@@ -8,4 +8,8 @@
 
 package application
 
+import (
+	"golang.org/x/exp/slog"
+)
+
 func (a App) handleSignals(logger *slog.Logger) {}
