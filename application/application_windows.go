@@ -8,4 +8,4 @@
 
 package application
 
-func (a App) handleSignals(_ Logger) {}
+func (a App) handleSignals(logger *slog.Logger) {}
