@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"github.com/kelseyhightower/envconfig"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // Config holds the common information for options: name and
