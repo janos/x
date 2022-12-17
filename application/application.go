@@ -108,7 +108,7 @@ func (a App) Start(logger *slog.Logger) error {
 		// Handle panic in this goroutine
 		if err := recover(); err != nil {
 			// Just log the panic error and crash
-			logger.Log(slog.ErrorLevel, "panic", slog.ErrorKey, err)
+			logger.Log(slog.LevelError, "panic", slog.ErrorKey, err)
 			logger.Info("stack", debug.Stack())
 			os.Exit(1)
 		}
@@ -139,7 +139,7 @@ func (a App) Start(logger *slog.Logger) error {
 		go func() {
 			defer func() {
 				if err := recover(); err != nil {
-					logger.Log(slog.ErrorLevel, "shutdown panic", slog.ErrorKey, err)
+					logger.Log(slog.LevelError, "shutdown panic", slog.ErrorKey, err)
 				}
 			}()
 
