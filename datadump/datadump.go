@@ -11,12 +11,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"reflect"
 	"strings"
 	"time"
-
-	"golang.org/x/exp/slog"
 )
 
 // Interface defines method to retrieve data Dump. If ifModifiedSince

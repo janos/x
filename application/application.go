@@ -10,6 +10,7 @@ import (
 	"expvar"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -17,7 +18,6 @@ import (
 	"syscall"
 	"time"
 
-	"golang.org/x/exp/slog"
 	"resenje.org/daemon"
 )
 

@@ -10,14 +10,13 @@ package application
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"runtime/pprof"
 	"syscall"
 	"time"
-
-	"golang.org/x/exp/slog"
 )
 
 func (a App) handleSignals(logger *slog.Logger) {

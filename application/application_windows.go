@@ -9,7 +9,7 @@
 package application
 
 import (
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 func (a App) handleSignals(logger *slog.Logger) {}

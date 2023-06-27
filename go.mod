@@ -1,10 +1,9 @@
 module resenje.org/x
 
-go 1.19
+go 1.21
 
 require (
 	github.com/kelseyhightower/envconfig v1.4.0
-	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 	gopkg.in/yaml.v3 v3.0.1
 	resenje.org/daemon v0.1.2
 )
