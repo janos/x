@@ -109,7 +109,7 @@ func (a App) Start(logger *slog.Logger) error {
 		if err := recover(); err != nil {
 			// Just log the panic error and crash
 			logger.Error("panic", "error", err)
-			logger.Info("stack", debug.Stack())
+			logger.Info("stack", "stack", string(debug.Stack()))
 			os.Exit(1)
 		}
 	}()

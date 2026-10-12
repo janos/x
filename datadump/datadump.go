@@ -130,7 +130,7 @@ func Handler(o interface{}, filePrefix string, logger *slog.Logger, compress boo
 				if u, ok := v.Field(i).Interface().(Interface); ok {
 					name := v.Type().Field(i).Name
 					if err := u.DataDump(newDumpFn(name)); err != nil {
-						logger.Error("data dump", err, "name", name)
+						logger.Error("data dump", "error", err, "name", name)
 					}
 				}
 			}
@@ -145,7 +145,7 @@ func Handler(o interface{}, filePrefix string, logger *slog.Logger, compress boo
 					continue
 				}
 				if err := u.DataDump(newDumpFn(name)); err != nil {
-					logger.Error("data dump", err, "name", name)
+					logger.Error("data dump", "error", err, "name", name)
 				}
 			}
 		}
