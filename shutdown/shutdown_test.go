@@ -8,6 +8,7 @@ package shutdown_test
 import (
 	"context"
 	"errors"
+	"runtime"
 	"testing"
 	"time"
 
@@ -155,5 +156,134 @@ func TestGraceful_Context(t *testing.T) {
 
 	if time.Since(start) < duration {
 		t.Error("shutdown finished before the context is done")
+	}
+}
+
+func TestGraceful_Context_backgroundNoLeak(t *testing.T) {
+	g := shutdown.NewGraceful()
+
+	startGoroutines := runtime.NumGoroutine()
+
+	var contexts []context.Context
+	for i := 0; i < 1000; i++ {
+		ctx := g.Context(context.Background())
+		if ctx.Done() == nil {
+			t.Fatal("expected non-nil Done channel")
+		}
+		if ctx.Err() != nil {
+			t.Fatalf("expected nil Err, got %v", ctx.Err())
+		}
+		contexts = append(contexts, ctx)
+	}
+
+	if leaked := runtime.NumGoroutine() - startGoroutines; leaked > 10 {
+		t.Fatalf("goroutines leaked: %d", leaked)
+	}
+
+	if err := g.Shutdown(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, ctx := range contexts {
+		select {
+		case <-ctx.Done():
+		default:
+			t.Fatal("expected context to be canceled after shutdown")
+		}
+		if !errors.Is(ctx.Err(), context.Canceled) {
+			t.Fatalf("expected context.Canceled, got %v", ctx.Err())
+		}
+	}
+}
+
+func TestGraceful_Context_withoutCancelNoLeak(t *testing.T) {
+	g := shutdown.NewGraceful()
+
+	baseCtx, baseCancel := context.WithCancel(context.Background())
+	defer baseCancel()
+	detachedCtx := context.WithoutCancel(baseCtx)
+
+	startGoroutines := runtime.NumGoroutine()
+
+	var contexts []context.Context
+	for i := 0; i < 1000; i++ {
+		ctx := g.Context(detachedCtx)
+		contexts = append(contexts, ctx)
+	}
+
+	if leaked := runtime.NumGoroutine() - startGoroutines; leaked > 10 {
+		t.Fatalf("goroutines leaked: %d", leaked)
+	}
+
+	if err := g.Shutdown(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, ctx := range contexts {
+		select {
+		case <-ctx.Done():
+		default:
+			t.Fatal("expected context to be canceled after shutdown")
+		}
+		if !errors.Is(ctx.Err(), context.Canceled) {
+			t.Fatalf("expected context.Canceled, got %v", ctx.Err())
+		}
+	}
+}
+
+func TestGraceful_Context_cancellableContext(t *testing.T) {
+	g := shutdown.NewGraceful()
+
+	parentCtx, parentCancel := context.WithCancel(context.Background())
+	ctx := g.Context(parentCtx)
+
+	select {
+	case <-ctx.Done():
+		t.Fatal("context should not be done yet")
+	default:
+	}
+
+	parentCancel()
+
+	select {
+	case <-ctx.Done():
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("context should be done after parent canceled")
+	}
+
+	if !errors.Is(ctx.Err(), context.Canceled) {
+		t.Fatalf("expected context.Canceled, got %v", ctx.Err())
+	}
+}
+
+func TestGraceful_Context_alreadyShutDown(t *testing.T) {
+	g := shutdown.NewGraceful()
+	if err := g.Shutdown(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := g.Context(context.Background())
+	select {
+	case <-ctx.Done():
+	default:
+		t.Fatal("expected context to be immediately done")
+	}
+	if !errors.Is(ctx.Err(), context.Canceled) {
+		t.Fatalf("expected context.Canceled, got %v", ctx.Err())
+	}
+}
+
+func TestGraceful_Context_values(t *testing.T) {
+	type keyType struct{}
+	key := keyType{}
+	val := "test-val"
+
+	parent := context.WithValue(context.Background(), key, val)
+
+	g := shutdown.NewGraceful()
+	ctx := g.Context(parent)
+
+	if got := ctx.Value(key); got != val {
+		t.Fatalf("expected value %q, got %q", val, got)
 	}
 }
